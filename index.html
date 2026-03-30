@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Un catalogue de parfums de luxe avec recherche, filtres et détails en modal.">
+    <title>Catalogue du Magazine de Parfums</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="light">
+    <header>
+        <div class="hero">
+            <h1>Rose Petals by Chaouachi</h1>
+            <p class="subtitle">Recherchez, filtrez par type et concentration, puis découvrez l’histoire de chaque parfum.</p>
+            <div class="hero-reel" aria-live="polite">
+                <span class="hero-reel-label">Ambiance du soir :</span>
+                <span class="hero-reel-text" id="hero-reel-text">Velours &amp; Éclat</span>
+            </div>
+        </div>
+        <div class="controls" role="search">
+            <input type="text" id="search" placeholder="Rechercher par nom...">
+            <select id="filter-type">
+                <option value="">Tous les types</option>
+            </select>
+            <select id="filter-mode">
+                <option value="">Toutes les concentrations</option>
+            </select>
+            <button id="theme-toggle" type="button" aria-label="Toggle theme">
+                <span class="theme-icon" aria-hidden="true"></span>
+                <span class="theme-label">Thème</span>
+            </button>
+            <button id="cart-toggle" type="button" class="cart-toggle" aria-label="Open cart">
+                <span class="cart-toggle-icon" aria-hidden="true">🛍</span>
+                <span class="cart-toggle-label">Panier</span>
+                <span id="cart-count" class="cart-count" aria-live="polite">0</span>
+            </button>
+        </div>
+    </header>
+    <section class="results-bar reveal" aria-live="polite">
+        <div class="results-left">
+            <span class="results-count" id="result-count">Affichage de 0 parfums</span>
+        </div>
+        <div class="results-right">
+            <span class="results-hint">Astuce : cliquez une carte ou appuyez sur Entrée.</span>
+        </div>
+    </section>
+    <section class="featured-section reveal" aria-label="Parfums à la une">
+        <div class="section-head">
+            <h2 class="section-title">Nos coups de coeur</h2>
+        </div>
+        <div class="featured-row" id="featured-row">
+            <!-- Featured perfumes will be rendered here -->
+        </div>
+    </section>
+    <main id="perfume-grid" class="reveal">
+        <!-- Perfumes will be rendered here -->
+    </main>
+    <div id="modal" class="modal">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-name">
+            <button class="close" id="modal-close" type="button" aria-label="Fermer">&times;</button>
+            <img id="modal-image" src="" alt="" loading="lazy">
+            <h2 id="modal-name"></h2>
+            <div class="modal-meta">
+                <div class="meta-row"><span class="meta-label">Type</span><span id="modal-type" class="meta-value"></span></div>
+                <div class="meta-row"><span class="meta-label">Concentration</span><span id="modal-mode" class="meta-value"></span></div>
+                <div class="meta-row"><span class="meta-label">Prix</span><span id="modal-price" class="meta-value"></span></div>
+            </div>
+            <div class="story-block" aria-label="Histoire du parfum">
+                <div class="story-row">
+                    <div class="story-kv"><span class="story-label">Note de tête</span><span id="modal-first" class="story-value"></span></div>
+                </div>
+                <div class="story-row">
+                    <div class="story-kv"><span class="story-label">Au coeur</span><span id="modal-heart" class="story-value"></span></div>
+                </div>
+                <p id="modal-description" class="modal-description"></p>
+            </div>
+            <div class="modal-actions" aria-label="Actions">
+                <button id="modal-add-cart" class="action-btn action-primary" type="button">Ajouter au panier</button>
+                <button id="modal-wishlist" class="action-btn action-secondary" type="button">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="cart-drawer" class="cart-drawer" aria-hidden="true">
+        <div class="cart-backdrop" data-cart-close="true" aria-hidden="true"></div>
+        <aside class="cart-panel" role="dialog" aria-modal="true" aria-labelledby="cart-title">
+            <div class="cart-header">
+                <h3 id="cart-title">Votre panier</h3>
+                <button id="cart-close" class="cart-close" type="button" aria-label="Fermer le panier">&times;</button>
+            </div>
+            <div id="cart-items" class="cart-items">
+                <!-- Cart items render here -->
+            </div>
+            <div class="cart-footer">
+                <div class="cart-subtotal">Sous-total : <span id="cart-subtotal">$0</span></div>
+                <div class="cart-footer-actions">
+                    <button id="cart-clear" class="action-btn action-secondary" type="button">Vider</button>
+                    <button id="cart-checkout" class="action-btn action-primary" type="button">Commander</button>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <div id="toast-host" class="toast-host" aria-live="polite" aria-atomic="true"></div>
+    
+    <footer class="contact-section reveal" aria-label="Contactez-nous">
+        <div class="contact-head">
+            <h2 class="contact-title">Contactez-nous</h2>
+            <p class="contact-subtitle">Rose Petals by Chaouachi</p>
+        </div>
+        <div class="contact-links">
+            <a href="https://facebook.com/rosepetalsbychaouachi" class="contact-link facebook" target="_blank" rel="noopener" aria-label="Facebook">
+                <span class="contact-icon">📘</span>
+                <span class="contact-label">Facebook</span>
+            </a>
+            <a href="https://tiktok.com/@rosepetalsbychaouachi" class="contact-link tiktok" target="_blank" rel="noopener" aria-label="TikTok">
+                <span class="contact-icon">🎵</span>
+                <span class="contact-label">TikTok</span>
+            </a>
+            <a href="https://instagram.com/rosepetalsbychaouachi" class="contact-link instagram" target="_blank" rel="noopener" aria-label="Instagram">
+                <span class="contact-icon">📷</span>
+                <span class="contact-label">Instagram</span>
+            </a>
+            <a href="tel:+21620838056" class="contact-link phone" aria-label="Appeler 20 838 056">
+                <span class="contact-icon">📞</span>
+                <span class="contact-label">20 838 056</span>
+            </a>
+        </div>
+    </footer>
+    
+    <script src="js/data.js"></script>
+    <script src="js/script.js"></script>
+</body>
+
+</html>
