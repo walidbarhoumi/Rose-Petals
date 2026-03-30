@@ -497,18 +497,19 @@ function initScrollReveals() {
                 io.unobserve(entry.target);
             }
         });
-    }, { threshold: 0.08, rootMargin: '0px 0px -10% 0px' });
+    }, { threshold: 0.01, rootMargin: '0px 0px 10% 0px' });
 
     els.forEach(el => io.observe(el));
 }
 
 // Render perfumes
 function renderPerfumes(perfumesToShow) {
+    console.log('[DEBUG] renderPerfumes called with', perfumesToShow.length, 'perfumes');
     grid.innerHTML = '';
 
     if (resultCount) {
         const n = perfumesToShow.length;
-        resultCount.textContent = `Affichage de ${n} parfum${n > 1 ? 's' : ''}`;
+        resultCount.textContent = `${n} parfums trouvés`;
         pulseElement(resultCount);
     }
     
@@ -520,16 +521,32 @@ function renderPerfumes(perfumesToShow) {
         return;
     }
     
+    let renderCount = 0;
+    let failedImages = 0;
     perfumesToShow.forEach((perfume, idx) => {
         const card = createPerfumeCard(perfume, idx);
         grid.appendChild(card);
+        renderCount++;
+        
+        // Check image after short delay
+        setTimeout(() => {
+            const img = card.querySelector('img');
+            if (img && img.naturalWidth === 0) {
+                failedImages++;
+                console.warn('[DEBUG IMAGE FAIL]', perfume.name, perfume.image);
+            }
+        }, 100);
     });
+    
+    console.log('[DEBUG] Rendered', renderCount, 'cards to grid. Check devtools console F12 → Console');
+    console.log('[DEBUG] Grid children after render:', grid.children.length);
 
     // Re-register new cards for scroll reveal.
-    initScrollReveals();
+    grid.querySelectorAll('.reveal').forEach(el => el.classList.add('is-visible'));
 }
 
 function renderFeatured(perfumesToConsider) {
+    console.log('[DEBUG] renderFeatured called with', perfumesToConsider.length, 'perfumes (showing top 4)');
     if (!featuredRow) return;
 
     const topPicks = [...perfumesToConsider]
@@ -542,7 +559,8 @@ function renderFeatured(perfumesToConsider) {
         featuredRow.appendChild(card);
     });
 
-    initScrollReveals();
+    console.log('[DEBUG] Featured rendered', topPicks.length, 'cards');
+    featuredRow.querySelectorAll('.reveal').forEach(el => el.classList.add('is-visible'));
 }
 
 function createFeaturedCard(perfume, index) {
@@ -594,7 +612,11 @@ function createFeaturedCard(perfume, index) {
 
     const img = card.querySelector('img');
     if (img) {
-        img.onerror = () => { img.onerror = null; img.src = getFallbackImageDataUri(); };
+        img.onerror = () => { 
+            console.warn('[IMAGE FAIL] Loading fallback for:', perfume.name, imageUrl);
+            img.onerror = null; 
+            img.src = getFallbackImageDataUri(); 
+        };
     }
 
     const viewBtn = card.querySelector('.featured-view-btn');
@@ -929,7 +951,11 @@ function openModal(perfume) {
     if (closeBtn && typeof closeBtn.focus === 'function') closeBtn.focus();
 
     // Modal image fallback.
-    modalImage.onerror = () => { modalImage.onerror = null; modalImage.src = getFallbackImageDataUri(); };
+    modalImage.onerror = () => { 
+        console.warn('[MODAL IMAGE FAIL]', perfume.name);
+        modalImage.onerror = null; 
+        modalImage.src = getFallbackImageDataUri(); 
+    };
 }
 
 function closeModal() {
