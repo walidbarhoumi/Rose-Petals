@@ -28,6 +28,9 @@ let currentTypingEl = null;
 
 const heroReelText = document.getElementById('hero-reel-text');
 const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+let revealObserver = null;
+let resizeDebounceTimer = null;
 
 const cartToggle = document.getElementById('cart-toggle');
 const cartCountEl = document.getElementById('cart-count');
@@ -87,7 +90,12 @@ document.addEventListener('DOMContentLoaded', function() {
     updateCartUI();
     setupEventListeners();
     initScrollReveals();
-});
+    
+    // Initial mobile force reveal
+    if (isMobile) {
+      setTimeout(forceReveal, 300);
+    }
+  });
 
 function initTheme() {
     // Default to whatever is already set in HTML/CSS.
@@ -458,6 +466,15 @@ function showToast(message) {
     }, 2200);
 }
 
+function forceReveal() {
+  const targets = document.querySelectorAll('[data-reveal-target] .reveal');
+  targets.forEach(el => el.classList.add('is-visible'));
+  // Fallback for nested grids
+  document.querySelectorAll('.perfume-grid, .featured-editorial').forEach(grid => {
+    grid.classList.add('reveal-ready');
+  });
+}
+
 function spawnSparkleBurst(x, y, kind = 'pink') {
     if (prefersReducedMotion) return;
     if (!x || !y) return;
@@ -494,24 +511,33 @@ function spawnSparkleBurst(x, y, kind = 'pink') {
 }
 
 function initScrollReveals() {
-    if (prefersReducedMotion) return;
+  if (prefersReducedMotion) {
+    forceReveal();
+    return;
+  }
 
-    const els = document.querySelectorAll('.reveal');
-    if (!('IntersectionObserver' in window) || els.length === 0) {
-        els.forEach(el => el.classList.add('is-visible'));
-        return;
-    }
+  if (!('IntersectionObserver' in window)) {
+    forceReveal();
+    return;
+  }
 
-    const io = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('is-visible');
-                io.unobserve(entry.target);
-            }
-        });
-    }, { threshold: 0.01, rootMargin: '0px 0px 10% 0px' });
+  const threshold = isMobile ? 0.01 : 0.05;
+  const rootMargin = isMobile ? '0px 0px -5% 0px' : '0px 0px 8% 0px';
 
-    els.forEach(el => io.observe(el));
+  revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-visible');
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold, rootMargin });
+
+  // Observe existing
+  document.querySelectorAll('.reveal:not(.is-visible)').forEach(el => revealObserver?.observe(el));
+  
+  // Force initial grids
+  setTimeout(forceReveal, 100);
 }
 
 // Render perfumes
@@ -537,8 +563,17 @@ function renderPerfumes(perfumesToShow) {
         grid.appendChild(card);
     });
 
-    // Re-register new cards for scroll reveal.
-    grid.querySelectorAll('.reveal').forEach(el => el.classList.add('is-visible'));
+    // Mobile reveal fix: Force show + observe new cards
+    setTimeout(() => {
+      forceReveal();
+      if (revealObserver) {
+        grid.querySelectorAll('.reveal:not(.is-visible)').forEach(el => revealObserver.observe(el));
+      }
+      // Fallback timeout
+      if (isMobile) {
+        setTimeout(forceReveal, 500);
+      }
+    }, 50);
 }
 
 function renderFeatured(perfumesToConsider) {
@@ -555,8 +590,17 @@ function renderFeatured(perfumesToConsider) {
         featuredRow.appendChild(card);
     });
 
-
-    featuredRow.querySelectorAll('.reveal').forEach(el => el.classList.add('is-visible'));
+    // Mobile reveal fix: Force show + observe new cards
+    setTimeout(() => {
+      forceReveal();
+      if (revealObserver) {
+        featuredRow.querySelectorAll('.reveal:not(.is-visible)').forEach(el => revealObserver.observe(el));
+      }
+      // Fallback timeout
+      if (isMobile) {
+        setTimeout(forceReveal, 500);
+      }
+    }, 50);
 }
 
 function createFeaturedCard(perfume, index) {
@@ -772,11 +816,29 @@ function getFilteredPerfumes() {
 }
 
 // Event listeners
+function debounce(fn, delay) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
+}
+
 function setupEventListeners() {
-    // Search and filter
-    searchInput.addEventListener('input', handleFilter);
-    typeFilter.addEventListener('change', handleFilter);
-    modeFilter.addEventListener('change', handleFilter);
+  // Mobile resize/orientation reveal fix
+  const debouncedForceReveal = debounce(forceReveal, 250);
+  window.addEventListener('resize', debouncedForceReveal);
+  window.addEventListener('orientationchange', debouncedForceReveal);
+  
+  if (isMobile) {
+    // Extra insurance on mobile
+    window.addEventListener('scroll', debouncedForceReveal, { passive: true });
+  }
+
+  // Search and filter
+  searchInput.addEventListener('input', handleFilter);
+  typeFilter.addEventListener('change', handleFilter);
+  modeFilter.addEventListener('change', handleFilter);
     
     // Theme toggle
     themeToggle.addEventListener('click', toggleTheme);
