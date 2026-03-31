@@ -123,6 +123,7 @@ body {
 .petal {
   position: fixed; pointer-events: none; z-index: 2; opacity: 0;
   animation: petalFall linear forwards; will-change: transform, opacity;
+  contain: layout style paint;
 }
 @keyframes petalFall {
   0%   { transform: translateY(-40px) rotate(0deg); opacity: .7; }
@@ -356,6 +357,8 @@ body {
 .feat-card {
   position: relative; overflow: hidden; border-radius: 16px; cursor: pointer;
   background: var(--card); transition: transform .35s var(--ease), box-shadow .35s;
+  will-change: transform;
+  contain: layout style paint;
 }
 .feat-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
 .feat-card:active { transform: scale(.98); }
@@ -466,6 +469,8 @@ main { padding: 0 16px calc(90px + var(--safe-b)); position: relative; z-index: 
   background: var(--card); display: flex; flex-direction: column;
   border: 1px solid var(--border);
   transition: transform .35s var(--ease), box-shadow .35s, border-color .3s;
+  will-change: transform;
+  contain: layout style paint;
 }
 .perfume-card:hover {
   transform: translateY(-6px);
@@ -918,6 +923,8 @@ footer::before {
 .sparkle {
   position: fixed; border-radius: 50%; pointer-events: none; z-index: 9998;
   animation: sparkFly .7s var(--ease) forwards;
+  will-change: transform, opacity;
+  contain: layout style paint;
 }
 @keyframes sparkFly {
   0%   { transform: translate(0,0) scale(1); opacity: 1; }

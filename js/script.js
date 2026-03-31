@@ -342,6 +342,7 @@ function initHeroMood() {
 
 function initCursorGlow() {
     if (prefersReducedMotion) return;
+    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) return; // Disable on touch/mobile
 
     cursorGlow = document.createElement('div');
     cursorGlow.className = 'cursor-glow';
@@ -358,16 +359,22 @@ function initCursorGlow() {
         cursorGlow.style.opacity = '0';
     });
 
+    let rafId;
     const tick = () => {
         cursorCurrent.x += (cursorTarget.x - cursorCurrent.x) * 0.12;
         cursorCurrent.y += (cursorTarget.y - cursorCurrent.y) * 0.12;
         if (cursorGlow) {
             cursorGlow.style.transform = `translate3d(${cursorCurrent.x - cursorGlowSize / 2}px, ${cursorCurrent.y - cursorGlowSize / 2}px, 0)`;
         }
-        requestAnimationFrame(tick);
+        rafId = requestAnimationFrame(tick);
     };
 
-    requestAnimationFrame(tick);
+    rafId = requestAnimationFrame(tick);
+    // Throttle: Pause if tab inactive
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) cancelAnimationFrame(rafId);
+        else rafId = requestAnimationFrame(tick);
+    });
 }
 
 function getStorySnippet(description) {
@@ -454,19 +461,20 @@ function showToast(message) {
 function spawnSparkleBurst(x, y, kind = 'pink') {
     if (prefersReducedMotion) return;
     if (!x || !y) return;
+    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const count = isTouch ? 4 : 8; // Reduce on mobile
     const colors = kind === 'purple'
         ? ['rgba(123, 77, 255, 0.95)', 'rgba(255, 79, 174, 0.55)']
         : ['rgba(255, 79, 174, 0.95)', 'rgba(123, 77, 255, 0.55)'];
 
-    const count = 10;
     for (let i = 0; i < count; i++) {
         const s = document.createElement('span');
         s.className = 'sparkle';
         s.style.left = `${x}px`;
         s.style.top = `${y}px`;
         s.style.background = `radial-gradient(circle, ${colors[0]} 0%, ${colors[1]} 45%, transparent 70%)`;
-        const dx = (Math.random() - 0.5) * 180;
-        const dy = (Math.random() - 0.5) * 180;
+        const dx = (Math.random() - 0.5) * (isTouch ? 120 : 180);
+        const dy = (Math.random() - 0.5) * (isTouch ? 120 : 180);
         const rot = (Math.random() - 0.5) * 260;
         s.style.setProperty('--dx', `${dx}px`);
         s.style.setProperty('--dy', `${dy}px`);
@@ -478,6 +486,10 @@ function spawnSparkleBurst(x, y, kind = 'pink') {
         setTimeout(() => {
             s.remove();
         }, 720);
+    }
+    // Haptic feedback on capable devices
+    if (navigator.vibrate && isTouch) {
+        navigator.vibrate(50);
     }
 }
 
@@ -504,7 +516,6 @@ function initScrollReveals() {
 
 // Render perfumes
 function renderPerfumes(perfumesToShow) {
-    console.log('[DEBUG] renderPerfumes called with', perfumesToShow.length, 'perfumes');
     grid.innerHTML = '';
 
     if (resultCount) {
@@ -521,32 +532,17 @@ function renderPerfumes(perfumesToShow) {
         return;
     }
     
-    let renderCount = 0;
-    let failedImages = 0;
     perfumesToShow.forEach((perfume, idx) => {
         const card = createPerfumeCard(perfume, idx);
         grid.appendChild(card);
-        renderCount++;
-        
-        // Check image after short delay
-        setTimeout(() => {
-            const img = card.querySelector('img');
-            if (img && img.naturalWidth === 0) {
-                failedImages++;
-                console.warn('[DEBUG IMAGE FAIL]', perfume.name, perfume.image);
-            }
-        }, 100);
     });
-    
-    console.log('[DEBUG] Rendered', renderCount, 'cards to grid. Check devtools console F12 → Console');
-    console.log('[DEBUG] Grid children after render:', grid.children.length);
 
     // Re-register new cards for scroll reveal.
     grid.querySelectorAll('.reveal').forEach(el => el.classList.add('is-visible'));
 }
 
 function renderFeatured(perfumesToConsider) {
-    console.log('[DEBUG] renderFeatured called with', perfumesToConsider.length, 'perfumes (showing top 4)');
+
     if (!featuredRow) return;
 
     const topPicks = [...perfumesToConsider]
@@ -559,7 +555,7 @@ function renderFeatured(perfumesToConsider) {
         featuredRow.appendChild(card);
     });
 
-    console.log('[DEBUG] Featured rendered', topPicks.length, 'cards');
+
     featuredRow.querySelectorAll('.reveal').forEach(el => el.classList.add('is-visible'));
 }
 
@@ -613,7 +609,7 @@ function createFeaturedCard(perfume, index) {
     const img = card.querySelector('img');
     if (img) {
         img.onerror = () => { 
-            console.warn('[IMAGE FAIL] Loading fallback for:', perfume.name, imageUrl);
+
             img.onerror = null; 
             img.src = getFallbackImageDataUri(); 
         };
@@ -952,7 +948,7 @@ function openModal(perfume) {
 
     // Modal image fallback.
     modalImage.onerror = () => { 
-        console.warn('[MODAL IMAGE FAIL]', perfume.name);
+
         modalImage.onerror = null; 
         modalImage.src = getFallbackImageDataUri(); 
     };
